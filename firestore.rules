@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User tracking rules
+    match /users/{userId} {
+      // Allow user to write their own profile (authenticated or guest fallback)
+      allow get: if (request.auth != null && request.auth.uid == userId) || userId.startsWith('guest_');
+      allow create: if (request.auth != null && request.auth.uid == userId) || userId.startsWith('guest_');
+      allow update: if (request.auth != null && request.auth.uid == userId) || userId.startsWith('guest_');
+      
+      // Allow reading list of users to get counts
+      allow list: if true; 
+    }
+    
+    // System stats (optional: we can use counts from /users)
+  }
+}

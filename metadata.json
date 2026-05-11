@@ -1,0 +1,5 @@
+{
+  "name": "Nông Nghiệp Thông Minh Bát Xát",
+  "description": "Ứng dụng tư vấn kỹ thuật nông nghiệp thông minh cho bà con nông dân xã Bát Xát, Lào Cai.",
+  "requestFramePermissions": ["camera"]
+}
