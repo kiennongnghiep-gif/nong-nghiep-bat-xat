@@ -1,0 +1,17 @@
+{
+  "name": "Nông Nghiệp Bát Xát",
+  "short_name": "Bát Xát Agri",
+  "description": "Ứng dụng chuyên gia nông nghiệp thông minh Bát Xát",
+  "start_url": "/?screen=expert",
+  "display": "standalone",
+  "background_color": "#047857",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/512/sprout.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
