@@ -51,67 +51,77 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 /**
  * Tracks the current user session.
- * Uses Anonymous Auth if enabled, otherwise falls back to a localStorage ID for tracking.
+ * Records unique users in 'appUsers' collection.
  */
 export async function trackUser() {
   try {
-    let uid: string;
-    
-    try {
-      const userCredential = await signInAnonymously(auth);
-      uid = userCredential.user.uid;
-    } catch (authError: any) {
-      if (authError.code === 'auth/admin-restricted-operation') {
-        console.warn('Anonymous Auth is not enabled in Firebase Console. Please enable it to track users accurately.');
-        // Fallback to localStorage ID for basic tracking if auth fails
-        uid = localStorage.getItem('agri_user_id') || '';
-        if (!uid) {
-          uid = 'guest_' + Math.random().toString(36).substring(2, 15);
-          localStorage.setItem('agri_user_id', uid);
-        }
-      } else {
-        throw authError;
-      }
+    let userId = localStorage.getItem('app_user_id');
+    if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      localStorage.setItem('app_user_id', userId);
     }
 
-    const userDocRef = doc(db, 'users', uid);
-    await setDoc(userDocRef, {
-      uid,
-      lastSeen: serverTimestamp(),
-    }, { merge: true });
+    const userDocRef = doc(db, 'appUsers', userId);
+    
+    // Check if it's the first time
+    const isFirstTime = !localStorage.getItem('app_user_initialized');
+    
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                        (window.navigator as any).standalone || 
+                        document.referrer.includes('android-app://');
+
+    const data: any = {
+      userId,
+      lastActiveAt: serverTimestamp(),
+      userAgent: window.navigator.userAgent,
+      installedLikePWA: isStandalone
+    };
+
+    if (isFirstTime) {
+      data.firstSeenAt = serverTimestamp();
+      localStorage.setItem('app_user_initialized', 'true');
+    }
+
+    await setDoc(userDocRef, data, { merge: true });
+
+    // Try to sign in anonymously in background for security if needed, but not blocking tracking
+    try {
+      if (!auth.currentUser) await signInAnonymously(auth);
+    } catch (e) {
+      // Ignore auth errors for tracking purposes as we allow guest writes in rules
+    }
 
   } catch (error) {
-    // If it's a permission error because of rules (which require auth), we just log it
     console.warn('Could not track user: ', error);
   }
 }
 
 /**
- * Gets the total number of "installs" (unique user records).
+ * Gets the total number of unique devices/users recorded.
  */
 export async function getInstallCount() {
   try {
-    const coll = collection(db, 'users');
+    const coll = collection(db, 'appUsers');
     const snapshot = await getCountFromServer(coll);
     return snapshot.data().count;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'users');
+    console.error('Error getting install count:', error);
     return 0;
   }
 }
 
 /**
- * Gets the number of "active users" (seen in the last 24 hours).
+ * Gets the number of users active in the last 5 minutes.
  */
 export async function getActiveUserCount() {
   try {
-    const yesterday = new Date();
-    yesterday.setHours(yesterday.getHours() - 24);
-    const q = query(collection(db, 'users'), where('lastSeen', '>=', Timestamp.fromDate(yesterday)));
+    const fiveMinutesAgo = new Date();
+    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+    const q = query(collection(db, 'appUsers'), where('lastActiveAt', '>=', Timestamp.fromDate(fiveMinutesAgo)));
     const snapshot = await getCountFromServer(q);
     return snapshot.data().count;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'users');
+    console.error('Error getting active user count:', error);
     return 0;
   }
 }

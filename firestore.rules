@@ -8,13 +8,19 @@ service cloud.firestore {
 
     // User tracking rules
     match /users/{userId} {
-      // Allow user to write their own profile (authenticated or guest fallback)
       allow get: if (request.auth != null && request.auth.uid == userId) || userId.startsWith('guest_');
       allow create: if (request.auth != null && request.auth.uid == userId) || userId.startsWith('guest_');
       allow update: if (request.auth != null && request.auth.uid == userId) || userId.startsWith('guest_');
-      
-      // Allow reading list of users to get counts
       allow list: if true; 
+    }
+
+    // Advanced User tracking rules (appUsers)
+    match /appUsers/{userId} {
+      // Allow any user to track their own activity
+      // We use a prefix 'user_' or authenticated UID
+      allow get: if true;
+      allow create, update: if true; // In production, refine this to check specific fields
+      allow list: if true;
     }
     
     // System stats (optional: we can use counts from /users)

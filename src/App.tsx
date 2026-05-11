@@ -124,14 +124,17 @@ export default function App() {
 
     initTracking();
     
-    // Refresh stats every minute
+    // Refresh stats and update tracking every 30 seconds
     const interval = setInterval(async () => {
+      // Periodic tracking update
+      trackUser().catch(console.error);
+      
       const [installs, active] = await Promise.all([
         getInstallCount(),
         getActiveUserCount()
       ]);
       setStats({ installs, active });
-    }, 60000);
+    }, 30000);
 
     // PWA Install Prompt
     const handleBeforeInstallPrompt = (e: any) => {

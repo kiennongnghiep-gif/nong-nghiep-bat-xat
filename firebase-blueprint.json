@@ -1,21 +1,23 @@
 {
   "entities": {
-    "User": {
-      "title": "User",
-      "description": "Represents a unique user of the application to track usage.",
+    "appUsers": {
+      "title": "App User",
+      "description": "Represents a unique device/user tracking session.",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "firstSeen": { "type": "string", "format": "date-time" },
-        "lastSeen": { "type": "string", "format": "date-time" }
+        "userId": { "type": "string" },
+        "firstSeenAt": { "type": "string", "format": "date-time" },
+        "lastActiveAt": { "type": "string", "format": "date-time" },
+        "userAgent": { "type": "string" },
+        "installedLikePWA": { "type": "boolean" }
       },
-      "required": ["uid", "firstSeen", "lastSeen"]
+      "required": ["userId", "lastActiveAt"]
     }
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": "User",
-      "description": "Information about active and installed users."
+    "/appUsers/{userId}": {
+      "schema": "appUsers",
+      "description": "Tracking documents for each unique user session."
     }
   }
 }
