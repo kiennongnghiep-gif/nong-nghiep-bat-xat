@@ -68,8 +68,23 @@ export default async function handler(req:any,res:any){
   try{
     if(action==="chat"){
       let last:any;
+      const normalizedHistory:any[]=[];
+      for(const item of Array.isArray(history)?history:[]){
+        const role=item?.role==="user"?"user":item?.role==="model"?"model":null;
+        const text=item?.parts?.map((p:any)=>p?.text||"").join("\n").trim();
+        if(!role||!text) continue;
+        if(normalizedHistory.length===0 && role!=="user") continue;
+        const prev=normalizedHistory[normalizedHistory.length-1];
+        if(prev?.role===role){
+          prev.parts[0].text += "\n" + text;
+        }else{
+          normalizedHistory.push({role,parts:[{text}]});
+        }
+      }
+      if(normalizedHistory.at(-1)?.role==="user") normalizedHistory.pop();
+
       for(const model of TEXT_MODELS){try{
-        const chat=genAI.chats.create({model,config:{systemInstruction:SYSTEM_PROMPT},history:Array.isArray(history)?history:[]});
+        const chat=genAI.chats.create({model,config:{systemInstruction:SYSTEM_PROMPT},history:normalizedHistory});
         const r=await chat.sendMessage({message});
         if(r?.text) return res.status(200).json({text:r.text,model});
       }catch(e){last=e;console.warn("[Gemini] model failed",model,errText(e));if(stop(e))break;}}
