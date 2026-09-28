@@ -221,10 +221,11 @@ export default function App() {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error:', error);
+      const detail = error instanceof Error ? error.message : String(error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'bot',
-        text: 'Có lỗi xảy ra khi kết nối với chuyên gia. Bà con vui lòng kiểm tra mạng hoặc gọi trực tiếp hotline: 0834.027.818.',
+        text: `Không kết nối được với chuyên gia. **Mã chẩn đoán:** ${detail}\n\nBà con có thể gọi hotline: 0834.027.818.`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
