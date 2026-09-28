@@ -225,7 +225,7 @@ export default function App() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'bot',
-        text: `Không kết nối được với chuyên gia. **Mã chẩn đoán:** ${detail}\n\nBà con có thể gọi hotline: 0834.027.818.`,
+        text: `Không kết nối được với chuyên gia. Mã chẩn đoán: ${detail}\n\nBà con có thể gọi hotline: 0834.027.818.`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
