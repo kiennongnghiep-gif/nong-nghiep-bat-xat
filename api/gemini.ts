@@ -17,7 +17,7 @@ Cấu trúc câu trả lời cho các nút gợi ý nhanh:
 Khi người dùng nhấn vào các nút gợi ý, hãy trả lời theo cấu trúc: [Tổng quan] -> [Kỹ thuật trọng tâm] -> [Khuyến cáo vật tư].
 
 Kịch bản chi tiết cho các chủ đề trọng tâm:
-1. Cách trị sâu xanh hại lúa:
+1. Cách trị sâu cuốn lá nhỏ trên lúa:
 - Tổng quan (Chẩn đoán): Sâu xanh thường gây hại giai đoạn lúa non, ăn khuyết lá, làm giảm khả năng quang hợp.
 - Kỹ thuật trọng tâm (Xử lý): Nếu mật độ thấp, khuyến khích bà con ngắt ổ trứng. Nếu mật độ cao (trên 5 con/m2), sử dụng các hoạt chất như: Indoxacarb hoặc Chlorantraniliprole.
 - Khuyến cáo vật tư: Phun vào chiều mát khi sâu bò ra ăn.
