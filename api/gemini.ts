@@ -52,7 +52,12 @@ function applyHeaders(res:any){
   res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
 }
-const errText=(e:any)=>String(e?.message||e||"");
+const errText=(e:any)=>{
+  if(!e) return "";
+  if(typeof e==="string") return e;
+  if(typeof e?.message==="string" && e.message !== "[object Object]") return e.message;
+  try { return JSON.stringify(e); } catch { return String(e); }
+};
 const stop=(e:any)=>/API_KEY_INVALID|INVALID API KEY|PERMISSION_DENIED|UNAUTHENTICATED/i.test(errText(e));
 function status(e:any){const t=errText(e).toUpperCase(); if(/API_KEY_INVALID|INVALID API KEY|UNAUTHENTICATED/.test(t))return 401;if(t.includes("PERMISSION_DENIED"))return 403;if(/429|RESOURCE_EXHAUSTED|QUOTA/.test(t))return 429;if(/404|NOT_FOUND/.test(t))return 404;if(/503|UNAVAILABLE|HIGH DEMAND/.test(t))return 503;return 500;}
 
@@ -109,6 +114,11 @@ export default async function handler(req:any,res:any){
     return res.status(400).json({error:"Hành động không hợp lệ",code:"BAD_ACTION"});
   }catch(e:any){
     const s=status(e);
-    return res.status(s).json({error:errText(e)||"Lỗi Gemini",code:s===401?"API_KEY_INVALID":s===403?"PERMISSION_DENIED":s===429?"QUOTA_EXCEEDED":s===404?"MODEL_NOT_FOUND":s===503?"MODEL_OVERLOAD":"GEMINI_ERROR"});
+    const raw=errText(e)||"Lỗi Gemini";
+    const code=s===401?"API_KEY_INVALID":s===403?"PERMISSION_DENIED":s===429?"QUOTA_OR_RATE_LIMIT":s===404?"MODEL_NOT_FOUND":s===503?"MODEL_OVERLOAD":"GEMINI_ERROR";
+    const friendly=s===429
+      ? "Gemini đang giới hạn lượt gọi hoặc dự án đã hết hạn mức (HTTP 429). Vui lòng thử lại sau hoặc kiểm tra Rate limits/Billing của dự án Gemini."
+      : raw;
+    return res.status(s).json({error:friendly,code,detail:raw});
   }
 }
