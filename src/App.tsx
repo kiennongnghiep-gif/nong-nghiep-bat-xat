@@ -552,7 +552,7 @@ export default function App() {
           {messages.length === 1 && !input && (
             <div className="flex gap-2 mb-5 overflow-x-auto pb-2 no-scrollbar px-1">
               {[
-                { text: "Cách trị sâu xanh hại lúa?", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-emerald-100", icon: Sprout },
+                { text: "Cách trị sâu cuốn lá nhỏ trên lúa", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-emerald-100", icon: Sprout },
                 { text: "Kỹ thuật chăm sóc cây dưa hấu", color: "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 shadow-rose-100", icon: Droplets },
                 { text: "Kỹ thuật chăm sóc cây Lê", color: "bg-lime-50 text-lime-700 border-lime-200 hover:bg-lime-100 shadow-lime-100", icon: Apple },
                 { text: "Chăn nuôi Lợn đen bản địa", color: "bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 shadow-pink-100", icon: PawPrint },
