@@ -14,7 +14,7 @@ async function postGemini(payload:GeminiPayload,retry=true){
       const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},cache:"no-store",body:JSON.stringify(payload),signal:c.signal});
       const raw=await r.text(); let data:any={}; try{data=raw?JSON.parse(raw):{}}catch{data={error:raw||`HTTP ${r.status}`}}
       if(r.ok)return data;
-      last=new Error(`[HTTP ${r.status}] ${data?.error||"Lỗi máy chủ"}`);
+      last=new Error(`HTTP ${r.status} - ${data?.error||"Lỗi máy chủ"}${data?.code ? ` - ${data.code}` : ""}`);
       if([502,503,504].includes(r.status)&&attempt<2){await wait(800);continue;}
       throw last;
     }catch(e:any){
