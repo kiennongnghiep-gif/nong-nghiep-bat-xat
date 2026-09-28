@@ -62,6 +62,16 @@ const FONT_SIZES = [
   { name: 'Lớn', value: 'text-lg', label: '18px' },
 ];
 
+const getNodeText = (node: React.ReactNode): string => {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(getNodeText).join('');
+  if (React.isValidElement(node)) {
+    const props = node.props as { children?: React.ReactNode };
+    return getNodeText(props.children);
+  }
+  return '';
+};
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -89,14 +99,22 @@ export default function App() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const latestBotRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Khi chuyên gia trả lời xong, đưa màn hình về ĐẦU câu trả lời mới.
+  // Không tự cuộn xuống cuối nữa, để bà con đọc từ dòng đầu tiên.
   useEffect(() => {
-    scrollToBottom();
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role !== 'bot' || lastMessage.id === 'welcome') return;
+
+    const timer = window.setTimeout(() => {
+      latestBotRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 100);
+
+    return () => window.clearTimeout(timer);
   }, [messages]);
 
   // Firebase tracking & stats
@@ -371,10 +389,17 @@ export default function App() {
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
+              ref={
+                msg.role === 'bot' &&
+                msg.id !== 'welcome' &&
+                msg.id === messages[messages.length - 1]?.id
+                  ? latestBotRef
+                  : undefined
+              }
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               className={cn(
-                "flex w-full max-w-[85%] flex-col gap-1",
+                "flex w-full max-w-[85%] flex-col gap-1 scroll-mt-4",
                 msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
               )}
             >
@@ -416,66 +441,70 @@ export default function App() {
                   <ReactMarkdown 
                     components={{
                       p: ({ children }) => {
-                        const text = React.Children.toArray(children).join('');
-                        
-                        // Check if this paragraph contains any buttons in [ ]
-                        const buttonRegex = /\[([^\]]+)\]/g;
-                        const matches = [...text.matchAll(buttonRegex)];
-                        
-                        if (matches.length > 0) {
+                        const text = getNodeText(children).trim();
+
+                        // Chỉ biến thành nút khi toàn bộ đoạn là các lệnh hành động
+                        // có emoji quy ước. Không còn stringify React element thành
+                        // "[object Object]" như bản cũ.
+                        const actionRegex = /\[(📞|📸|📍|🖼️|💊|📅|📝|❓)\s*([^\]]+)\]/g;
+                        const matches = [...text.matchAll(actionRegex)];
+                        const remainingText = text
+                          .replace(/\[(📞|📸|📍|🖼️|💊|📅|📝|❓)\s*([^\]]+)\]/g, '')
+                          .trim();
+
+                        if (matches.length > 0 && remainingText.length === 0) {
                           return (
                             <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
                               {matches.map((match, idx) => {
-                                const fullText = match[1];
-                                const icon = fullText.split(' ')[0];
-                                const label = fullText.substring(icon.length).trim();
-                                
+                                const icon = match[1];
+                                const label = match[2].trim();
+
                                 let IconComponent = HelpCircle;
                                 let colorClass = "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100";
                                 let action = () => setInput(label);
 
-                                if (icon.includes('📞')) {
+                                if (icon === '📞') {
                                   IconComponent = Phone;
                                   colorClass = "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
                                   action = () => handleQuickAction('call');
-                                } else if (icon.includes('📸')) {
+                                } else if (icon === '📸') {
                                   IconComponent = Camera;
                                   colorClass = "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100";
                                   action = () => fileInputRef.current?.click();
-                                } else if (icon.includes('📍')) {
+                                } else if (icon === '📍') {
                                   IconComponent = MapPin;
                                   colorClass = "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100";
-                                } else if (icon.includes('🖼️')) {
+                                } else if (icon === '🖼️') {
                                   IconComponent = ImageIcon;
                                   colorClass = "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100";
                                   const prompt = label.replace('Xem hình ảnh minh họa cho ', '');
                                   action = () => handleQuickAction(`gen_img:${prompt}`);
-                                } else if (icon.includes('💊')) {
+                                } else if (icon === '💊') {
                                   IconComponent = ShoppingBag;
                                   colorClass = "bg-red-50 text-red-700 border-red-200 hover:bg-red-100";
-                                } else if (icon.includes('📅')) {
+                                } else if (icon === '📅') {
                                   IconComponent = Calendar;
                                   colorClass = "bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100";
-                                } else if (icon.includes('📝')) {
+                                } else if (icon === '📝') {
                                   IconComponent = FileText;
                                   colorClass = "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100";
-                                } else if (icon.includes('❓')) {
+                                } else if (icon === '❓') {
                                   IconComponent = HelpCircle;
                                   colorClass = "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100";
                                 }
 
                                 return (
-                                  <button 
+                                  <button
                                     key={idx}
                                     onClick={action}
-                                    disabled={isGeneratingImage && icon.includes('🖼️')}
+                                    disabled={isGeneratingImage && icon === '🖼️'}
                                     className={cn(
                                       "flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm font-medium shadow-sm",
                                       colorClass,
-                                      isGeneratingImage && icon.includes('🖼️') && "opacity-50"
+                                      isGeneratingImage && icon === '🖼️' && "opacity-50"
                                     )}
                                   >
-                                    {isGeneratingImage && icon.includes('🖼️') ? (
+                                    {isGeneratingImage && icon === '🖼️' ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
                                       <IconComponent className="w-4 h-4 shrink-0" />
@@ -487,6 +516,7 @@ export default function App() {
                             </div>
                           );
                         }
+
                         return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>;
                       }
                     }}
@@ -512,7 +542,7 @@ export default function App() {
             Chuyên gia đang nghiên cứu giải pháp...
           </motion.div>
         )}
-        <div ref={messagesEndRef} />
+        <div className="h-2" />
       </main>
 
       {/* Input Area */}
